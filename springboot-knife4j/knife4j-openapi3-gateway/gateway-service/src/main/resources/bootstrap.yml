@@ -1,0 +1,52 @@
+server:
+  port: 10093
+knife4j:
+  gateway:
+    enabled: true
+    strategy: discover
+    discover:
+      service-config:
+        user-service:
+          group-name: 用户服务
+          order: 1
+        order-service:
+          group-name: 订单
+          order: 1
+      version: openapi3
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yaml
+        group: DEFAULT_GROUP
+    discovery:
+      reactive:
+        enabled: false
+    loadbalancer:
+      retry:
+        enabled: true
+    # 路由网关配置
+    gateway:
+      # 启用了自动根据服务名建立路由
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - RewritePath=/user-service/(?<segment>.*),/$\{segment}
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/**
+          filters:
+            - RewritePath=/order-service/(?<segment>.*),/$\{segment}
